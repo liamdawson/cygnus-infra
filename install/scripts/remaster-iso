@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+img_name="debian-10.4.0-amd64-xfce-CD-1.iso"
+
+cd "$DIR"
+
+docker run --privileged --rm -it \
+  -v "$(pwd)/cache:/cache" \
+  -v "$(pwd)/initrd/:/initrd:ro" \
+  debian:bullseye \
+  /bin/bash -c "\
+    apt-get update -y \
+      && apt-get install -y cpio isolinux libarchive-tools xorriso\
+      && mkdir /tmp/iso \
+      && cd /tmp/iso \
+      && bsdtar -C /tmp/iso -xf /cache/${img_name} \
+      && gunzip install.amd/initrd.gz \
+      && cp -r /initrd/* ./ \
+      && echo preseed.cfg | cpio -H newc -o -A -F install.amd/initrd \
+      && gzip install.amd/initrd \
+      && find -follow -type f ! -name md5sum.txt -print0 | xargs -0 md5sum > md5sum.txt \
+      && cd /cache \
+      && xorriso -as mkisofs -o /cache/remastered-debian-cd.iso -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -c isolinux/boot.cat -b isolinux/isolinux.bin -no-emul-boot -boot-load-size 4 -boot-info-table /tmp/iso"
