@@ -9,7 +9,7 @@ source "vmware-iso" "vmware-dev" {
   ssh_username = "liamdawson"
   ssh_password = "tmpUserPassword"
   ssh_timeout = "10m"
-  shutdown_command = "echo 'tmpUserPassword' | sudo -S shutdown -P now"
+  shutdown_command = "sudo -S shutdown -P now"
 
   boot_wait = "5s"
   boot_command = [
