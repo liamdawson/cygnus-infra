@@ -1,0 +1,9 @@
+version: "3.6"
+services:
+  builder:
+    build: .
+    volumes:
+      - "./build.sh:/build:ro"
+      - "./workdir/:/tmp/workdir"
+      - "./debian.buster/:/seeds/debian.buster"
+    command: "/build"

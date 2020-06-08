@@ -8,6 +8,7 @@ img_name="debian-10.4.0-amd64-xfce-CD-1.iso"
 cd "$DIR"
 
 docker run --privileged --rm -it \
+  -v "$(pwd)/workdir:/tmp/workdir" \
   -v "$(pwd)/cache:/cache" \
   -v "$(pwd)/initrd/:/initrd:ro" \
   debian:bullseye \
