@@ -1,0 +1,4 @@
+workdir/
+output/
+cache/
+packer_cache/

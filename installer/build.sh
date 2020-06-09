@@ -1,48 +1,87 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -xeuo pipefail
 
-cd "/tmp/workdir"
+mkdir -p "/workdir/iso" && cd "/workdir/iso"
 
-build-simple-cdd \
-    --force-root \
-    --profiles hypervisor \
-    --dist buster \
-    --profiles-udeb-dist buster \
-    --debian-mirror http://ftp.au.debian.org/debian/ \
-    --locale en_AU.UTF-8 \
-    --keyboard us
+if ! [[ -f /output/netinst.iso ]]; then
+    curl -fsSL "https://mirror.aarnet.edu.au/pub/debian-cd/10.4.0/amd64/iso-cd/debian-10.4.0-amd64-netinst.iso" -o /output/netinst.iso
+fi
 
-# simple-cdd \
-#     --dist buster \
-#     --locale en_AU \
-#     --keyboard ??? \
-#     --profiles ??? \
-#     --local-packages ??? \
-#     --build-profiles ??? \
-#     --auto-profiles ??? \
-#     --debian-mirror http://ftp.au.debian.org/debian/ \
-# 
-# 
-# 
-# man simple-cdd
+bsdtar -C /workdir/iso -xf /output/netinst.iso
 
-# germinate -S file:///seeds/ -s debian.buster \
-    # -m http://ftp.au.debian.org/debian/ \
-    # -a amd64 \
-    # -c main,contrib,non-free \
-    # -d buster,buster-updates
+cd /workdir/iso/install.amd/
+cp /preseed.cfg .
+gunzip initrd.gz
+echo "preseed.cfg" | cpio -H newc -o -A -F initrd
+gzip initrd
 
-# debmirror \
-#     --progress \
-#     --dry-run \
-#     --host=ftp.au.debian.org \
-#     --method=rsync \
-#     --dist=stable \
-#     --arch=amd64 \
-#     --nosource \
-#     --diff=none \
-#     --rsync-extra=doc,tools,trace \
-#     /tmp/workdir/mirror
+cd /workdir/iso
+set +e
+find . -follow -type f ! -name md5sum.txt -print0 | xargs -0 md5sum > md5sum.txt
+set -e
+dd if=/output/netinst.iso bs=1 count=432 of=/workdir/netinst-mbr.raw
 
-# man debmirror
+xorriso -as mkisofs \
+  -r -V 'cygnus-hypervisor' \
+  -o /output/cygnus-hypervisor.iso \
+  -J -J -joliet-long \
+  -cache-inodes \
+  -isohybrid-mbr /workdir/netinst-mbr.raw \
+  -b isolinux/isolinux.bin \
+  -c isolinux/boot.cat \
+  -boot-load-size 4 -boot-info-table -no-emul-boot \
+  -eltorito-alt-boot \
+  -e boot/grub/efi.img \
+  -no-emul-boot \
+  -isohybrid-gpt-basdat \
+  -isohybrid-apm-hfsplus \
+  .
+
+exit 0
+
+(
+    lb config \
+        -b iso \
+        --cache false \
+        --apt-recommends true \
+        --architectures amd64 \
+        --binary-images iso-hybrid \
+        --debian-installer cdrom \
+        --debian-installer-gui false \
+        --mode debian \
+        --archive-areas "main contrib non-free" \
+        --security true \
+        --win32-loader false \
+        --updates true \
+        --debconf-frontend noninteractive \
+        --debconf-priority critical \
+        --debian-installer-preseed /preseed.cfg \
+        --distribution buster \
+        --image-name cygnus-hypervisor \
+        --linux-flavours amd64 \
+        --uefi-secure-boot enable \
+        --parent-mirror-bootstrap http://ftp.au.debian.org/debian/ \
+        --parent-mirror-binary http://ftp.au.debian.org/debian/ \
+        --mirror-bootstrap http://ftp.au.debian.org/debian/ \
+        --mirror-binary http://ftp.au.debian.org/debian/
+
+    cat <<EOFL >> config/package-lists/live.list.chroot
+cockpit
+libvirt-clients
+libvirt-daemon-system
+nfs-kernel-server
+openssh-server
+qemu-kvm
+ssh-import-id
+sudo
+unattended-upgrades
+vim
+EOFL
+
+    lb build; ls /workdir
+)
+
+cp /workdir/cygnus* /output/
+cd /workdir
+tar -cf /output/config.tar config

@@ -2,8 +2,9 @@ version: "3.6"
 services:
   builder:
     build: .
+    command: "/build"
+    privileged: true
     volumes:
       - "./build.sh:/build:ro"
-      - "./workdir/:/tmp/workdir"
-      - "./debian.buster/:/seeds/debian.buster"
-    command: "/build"
+      - "./output:/output"
+      - "./preseed.cfg:/preseed.cfg:ro"

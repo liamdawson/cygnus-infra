@@ -1,5 +1,5 @@
 source "vmware-iso" "vmware-dev" {
-  iso_url = "./cache/remastered-debian-cd.iso"
+  iso_url = "./output/cygnus-hypervisor-amd64.hybrid.iso"
 
   iso_checksum=""
   iso_checksum_type = "none"
