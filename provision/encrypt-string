@@ -6,7 +6,7 @@ set -eu
 
 cd "$DIR"
 
-ansible-playbook \
-  -bi ./hosts \
+ansible-vault \
+  encrypt_string \
   --vault-id prod@~/.config/cygnus/vault-password \
-  playbook.yml
+  --name="$1"

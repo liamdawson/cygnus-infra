@@ -1,9 +1,15 @@
 ---
 - hosts: all
   tasks:
-    - import_tasks: tasks.yml
+    - import_tasks: tasks/main.yml
   handlers:
     - name: reload sshd
       service:
         name: sshd
         state: reloaded
+    - name: reload traefik
+      systemd:
+        name: traefik
+        daemon_reload: true
+        enabled: true
+        state: restarted

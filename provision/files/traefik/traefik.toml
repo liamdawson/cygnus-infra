@@ -1,0 +1,35 @@
+debug = true
+
+[entryPoints.web]
+  address = ":80"
+
+  [entryPoints.web.http]
+    [entryPoints.web.http.redirections]
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
+        scheme = "https"
+
+[entryPoints.websecure]
+  address = ":443"
+
+[certificatesResolvers.cloudflare.acme]
+  email = "liam@ldaws.com"
+  keyType = "EC384"
+  storage = "/etc/traefik/acme.json"
+
+  [certificatesResolvers.cloudflare.acme.dnsChallenge]
+    provider = "cloudflare"
+    delayBeforeCheck = 5
+
+[providers]
+  [providers.file]
+    filename = "/etc/traefik/routes.toml"
+
+[api]
+  dashboard = true
+  insecure = true
+# [frontends.cockpit]
+#   backend = "cockpit"
+#   passHostHeader = true
+#   [frontends.cockpit.routes.cockpit]
+#     rule = "Host:swan.home.ldaws.com"

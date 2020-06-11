@@ -1,0 +1,17 @@
+[http]
+  [http.routers]
+    [http.routers.to-cockpit]
+      rule = "Host(`swan.home.ldaws.com`)"
+      service = "cockpit"
+
+      [http.routers.to-cockpit.tls]
+        certResolver = "cloudflare"
+
+        [[http.routers.to-cockpit.tls.domains]]
+          main = "home.ldaws.com"
+          sans = ["*.home.ldaws.com"]
+
+  [http.services]
+    [http.services.cockpit.loadBalancer]
+      [[http.services.cockpit.loadBalancer.servers]]
+      url = "http://127.0.0.1:9090"
