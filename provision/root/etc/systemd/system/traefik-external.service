@@ -1,0 +1,14 @@
+[Unit]
+Description=traefik kubernetes configuration
+Before=traefik.service
+
+[Service]
+Type=oneshot
+
+ExecStart=/usr/bin/mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
+ExecStart=/usr/bin/sh -c "cp /etc/traefik/kubernetes/* /var/run/secrets/kubernetes.io/serviceaccount/"
+ExecStart=/usr/bin/sh -c "chown traefik:traefik /var/run/secrets/kubernetes.io/serviceaccount/*"
+ExecStart=/usr/bin/sh -c "chmod 0750 /var/run/secrets/kubernetes.io/serviceaccount/*"
+
+[Install]
+WantedBy=traefik.service

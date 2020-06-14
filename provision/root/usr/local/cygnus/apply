@@ -17,7 +17,7 @@ apt-get install -y \
 # traefik config
 chmod 0775 /etc/traefik
 chown -R traefik:traefik /etc/traefik
-chmod 0640 /etc/traefik/{traefik-cloudflare-api-token,acme.json}
+chmod 0600 /etc/traefik/{traefik-cloudflare-api-token,acme.json}
 
 systemctl enable traefik
 

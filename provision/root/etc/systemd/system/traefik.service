@@ -5,15 +5,17 @@ Wants=network-online.target systemd-networkd-wait-online.service
 
 [Service]
 Environment="CF_DNS_API_TOKEN_FILE=/etc/traefik/traefik-cloudflare-api-token"
+Environment="KUBERNETES_SERVICE_HOST=192.168.53.7"
+Environment="KUBERNETES_SERVICE_PORT=6443"
+User=traefik
+Group=traefik
 
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 ExecStart=/usr/local/bin/traefik --configfile=/etc/traefik/traefik.toml
-Group=traefik
 LimitNOFILE=1048576
 NoNewPrivileges=true
 Restart=on-abnormal
-User=traefik
 WorkingDirectory=/etc/traefik
 
 [Install]
