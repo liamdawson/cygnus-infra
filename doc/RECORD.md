@@ -2,6 +2,8 @@
 
 ## Getting started
 
+(As of eb7e748)
+
 ```shell
 $ sudo systemctl disable libvirt-guests
 $ virsh pool-autostart default
