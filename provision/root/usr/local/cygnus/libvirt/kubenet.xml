@@ -1,0 +1,26 @@
+<!--
+  References:
+
+  https://web.archive.org/web/20200614032607/https://fabianlee.org/2018/10/22/kvm-using-dnsmasq-for-libvirt-dns-resolution/
+
+  Note: buster has 5.0.0, so the dnsmasq:option element isn't an option (that's 5.6)
+-->
+
+<network>
+  <name>kubenet</name>
+  <forward mode='nat'/>
+  <bridge name='brkubenet' />
+  <domain name='cygnus.home.ldaws.com' localOnly='yes'/>
+  <dns>
+    <host ip='192.168.53.7'>
+      <hostname>control</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.53.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.53.3' end='192.168.53.250'/>
+      <host name='polaris' mac='52:54:00:e3:df:83' ip='192.168.53.7'/>
+      <host name='sirius'  mac='52:54:00:42:bc:2f' ip='192.168.53.10'/>
+    </dhcp>
+  </ip>
+</network>

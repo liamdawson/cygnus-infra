@@ -1,0 +1,27 @@
+http:
+  routers:
+    cockpit-proxy:
+      tls: { certResolver: cloudflare }
+      rule: "Host(`swan.home.ldaws.com`)"
+      service: cockpit
+
+  services:
+    cockpit:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:9090
+
+tcp:
+  routers:
+    kubeapi-proxy:
+      entryPoints: ["kubeapi"]
+      rule: "HostSNI(`control.cygnus.home.ldaws.com`)"
+      service: "kubeapi"
+      tls:
+        passthrough: true
+
+  services:
+    kubeapi:
+      loadBalancer:
+        servers:
+          - address: "192.168.53.7:6443"

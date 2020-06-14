@@ -1,0 +1,20 @@
+# reference: https://github.com/dehesselle/virtctl/blob/c601cfe272fb5e2a9899df738f412ac02a7ddb3a/virtctl%40.service
+
+[Unit]
+Description=Virtual Machine %i
+
+[Service]
+Type=forking
+Environment=DOMAIN_DIR=/etc/libvirt/qemu
+PIDFile=/run/libvirt/qemu/%i.pid
+# Check if libvirtd is responsive by connecting to it. This is not allowed to fail.
+ExecStartPre=/usr/bin/bash -c 'COUNT=0; while [ $COUNT -le 10 ]; do ((COUNT++)); virsh connect 2>/dev/null; [ $? -eq 0 ] && exit 0 || sleep 1; done; exit 1'
+# Create the domain.
+ExecStart=/usr/bin/virsh create ${DOMAIN_DIR}/%i.xml
+# Shutdown the domain gracefully by sending ACPI shutdown event.
+ExecStop=/usr/bin/bash -c 'COUNT=0; while [ $COUNT -le 60 ]; do STATE=$(virsh domstate %i 2>&1); if [ "$STATE" = "running" ]; then [ $(($COUNT % 15)) -eq 0 ] && virsh shutdown %i; ((COUNT++)); elif [ "$STATE" = "shut off" ] || [ "${STATE::27}" = "error: failed to get domain" ]; then exit 0; fi; sleep 1; done; exit 1'
+TimeoutStartSec=20
+TimeoutStopSec=90
+
+[Install]
+WantedBy=hypervisor.target

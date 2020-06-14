@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+release_url="https://github.com/rancher/k3os/releases/download/v0.10.2"
+iso_url="${release_url}/k3os-amd64.iso"
+initrd_url="${release_url}/k3os-initrd-amd64"
+vmlinuz_url="${release_url}/k3os-vmlinuz-amd64"
+
+dest_folder="/usr/local/cygnus/k3os"
+iso_dest="/var/lib/libvirt/images/k3os-amd64.iso"
+initrd_dest="${dest_folder}/k3os-initrd-amd64"
+vmlinuz_dest="${dest_folder}/k3os-vmlinuz-amd64"
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
+set -eu
+
+extra_kernel_args="$1"
+ram_size="$2"
+target_hostname="$3"
+mac_address="$4"
+
+boot_cmd='"echo GA_PATH=/dev/vport0p1>/etc/conf.d/qemu-guest-agent"'
+kernel_args="\
+console=ttyS0 \
+boot_cmd=$boot_cmd \
+hostname=${target_hostname} \
+ssh_authorized_keys=github:liamdawson \
+k3os.mode=install \
+k3os.install.silent=true \
+k3os.install.device=/dev/vda \
+k3os.hostname=${target_hostname} \
+k3os.server_url=https://control.cygnus.home.ldaws.com:6443 \
+$extra_kernel_args \
+"
+
+cd "$DIR"
+
+if ! [ -f "$iso_dest" ]; then
+  echo "Downloading k3os iso..."
+  iso_tmp_dest="$(mktemp -d)/k3os-amd64.iso"
+
+  curl -o "$iso_tmp_dest" -fSL "$iso_url"
+  sudo mv "$iso_tmp_dest" "$iso_dest"
+fi
+
+if ! [ -f "$initrd_dest" ]; then
+  echo "Downloading k3os initrd..."
+  tmp_dest="$(mktemp -d)/k3os-initrd-amd64"
+
+  curl -o "$tmp_dest" -fSL "$initrd_url"
+  sudo mv "$tmp_dest" "$initrd_dest"
+fi
+
+if ! [ -f "$vmlinuz_dest" ]; then
+  echo "Downloading k3os vmlinuz..."
+  tmp_dest="$(mktemp -d)/k3os-vmlinuz-amd64"
+
+  curl -o "$tmp_dest" -fSL "$vmlinuz_url"
+  sudo mv "$tmp_dest" "$vmlinuz_dest"
+fi
+
+set -x
+
+sudo virt-install \
+  --name "$target_hostname" \
+  --ram "$ram_size" \
+  --vcpus 2 \
+  --disk size=64 \
+  --os-type linux \
+  --os-variant ubuntu18.04 \
+  --graphics none \
+  --network network=kubenet,mac="$mac_address" \
+  --install kernel="$vmlinuz_dest",initrd="$initrd_dest" \
+  --extra-args "$kernel_args" \
+  --console=pty,target_type=serial \
+  --disk path="$iso_dest",device=cdrom \
+  --noreboot
+
+#  --initrd-inject /usr/local/cygnus/k3os/config.yaml \

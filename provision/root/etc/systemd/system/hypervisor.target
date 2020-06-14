@@ -1,0 +1,9 @@
+# reference: https://github.com/dehesselle/virtctl/blob/c601cfe272fb5e2a9899df738f412ac02a7ddb3a/hypervisor.target
+
+[Unit]
+Description=Hypervisor
+Requires=multi-user.target
+Wants=libvirtd.service
+Conflicts=rescue.service rescue.target
+After=multi-user.target rescue.service rescue.target libvirtd.service
+AllowIsolate=yes

@@ -12,6 +12,9 @@ debug = true
 [entryPoints.websecure]
   address = ":443"
 
+[entryPoints.kubeapi]
+  address = ":6443"
+
 [certificatesResolvers.cloudflare.acme]
   email = "liam@ldaws.com"
   keyType = "EC384"
@@ -21,15 +24,9 @@ debug = true
     provider = "cloudflare"
     delayBeforeCheck = 5
 
-[providers]
-  [providers.file]
-    filename = "/etc/traefik/routes.toml"
+[providers.file]
+  filename = "/etc/traefik/static.yaml"
 
 [api]
   dashboard = true
   insecure = true
-# [frontends.cockpit]
-#   backend = "cockpit"
-#   passHostHeader = true
-#   [frontends.cockpit.routes.cockpit]
-#     rule = "Host:swan.home.ldaws.com"

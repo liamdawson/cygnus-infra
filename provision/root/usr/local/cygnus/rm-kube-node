@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
+set -eu
+
+target_hostname="$1"
+
+cd "$DIR"
+
+set -x
+
+virsh destroy "$target_hostname" || true
+virsh undefine "$target_hostname" --storage "/var/lib/libvirt/images/${target_hostname}.qcow2"
