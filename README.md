@@ -6,3 +6,5 @@ cluster.
 ## Resources
 
 - [Architectural Decision Records](./doc/adr/)
+- [Known Issues](./doc/ISSUES.md)
+- [Record of commands](./doc/RECORD.md)

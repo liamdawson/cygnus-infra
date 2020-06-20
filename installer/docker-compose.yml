@@ -8,3 +8,4 @@ services:
       - "./build.sh:/build:ro"
       - "./output:/output"
       - "./preseed.cfg:/preseed.cfg:ro"
+      - "./late-command.sh:/late-command.sh"

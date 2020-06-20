@@ -1,39 +1,50 @@
-# Command Record
+# Command Recordt
 
-## Getting started
-
-(As of eb7e748)
+## After First Boot
 
 ```shell
-$ sudo systemctl disable libvirt-guests
-$ virsh pool-autostart default
-Pool default marked as autostarted
-$ virsh net-autostart kubenet
-Network kubenet marked as autostarted
-$ /usr/local/cygnus/mk-kube-server polaris 52:54:00:e3:df:83
-+ sudo virt-install --name polaris --ram 2048 --vcpus 2 --disk size=64 --os-type linux --os-variant ubuntu18.04 --graphics none --network network=kubenet,mac=52:54:00:e3:df:83 --install kernel=/usr/local/cygnus/k3os/k3os-vmlinuz-amd64,initrd=/usr/local/cygnus/k3os/k3os-initrd-amd64 --extra-args 'console=ttyS0 boot_cmd="echo GA_PATH=/dev/vport0p1>/etc/conf.d/qemu-guest-agent" hostname=polaris ssh_authorized_keys=github:liamdawson k3os.mode=install k3os.install.silent=true k3os.install.device=/dev/vda k3os.hostname=polaris k3os.server_url=https://control.cygnus.home.ldaws.com:6443 k3os.k3s_args=server  ' --console=pty,target_type=serial --disk path=/var/lib/libvirt/images/k3os-amd64.iso,device=cdrom --noreboot
-
-Starting install...
+$ sudo passwd
+New password:
+Retype new password:
+passwd: password updated successfully
+$ sudo passwd "$(whoami)"
+New password:
+Retype new password:
+passwd: password updated successfully
+$ cat <<EOF | sudo tee /etc/ssh/sshd_config
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+UsePAM yes
+X11Forwarding yes
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server
+EOF
+$ sudo systemctl reload sshd
+$ sudo usermod "$(whoami)" -aG docker
+$ exit
 ...
-Installation finished. No error reported.
- * Rebooting system in 5 seconds (CTRL+C to cancel)
-[   19.619822] reboot: Restarting system
+$ kubeadm config images pull
+[config/images] Pulled k8s.gcr.io/kube-apiserver:v1.18.3
+[config/images] Pulled k8s.gcr.io/kube-controller-manager:v1.18.3
+[config/images] Pulled k8s.gcr.io/kube-scheduler:v1.18.3
+[config/images] Pulled k8s.gcr.io/kube-proxy:v1.18.3
+[config/images] Pulled k8s.gcr.io/pause:3.2
+[config/images] Pulled k8s.gcr.io/etcd:3.4.3-0
+[config/images] Pulled k8s.gcr.io/coredns:1.6.7
+```
 
-Domain creation completed.
-You can restart your domain by running:
-  virsh --connect qemu:///system start polaris
-$ sudo systemctl enable --now libvirt-domain@polaris && sleep 20
-$ ssh rancher@192.168.53.7 sudo cat /var/lib/rancher/k3s/server/node-token
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx::server:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-$ /usr/local/cygnus/mk-kube-agent sirius 52:54:00:42:bc:2f "$(ssh rancher@192.168.53.7 sudo cat /var/lib/rancher/k3s/server/node-token)"
-$ sudo systemctl enable --now libvirt-domain@sirius && sleep 20
-$ ssh rancher@192.168.53.7 kubectl get nodes
-NAME      STATUS   ROLES    AGE    VERSION
-polaris   Ready    master   3m9s   v1.17.6+k3s1
-sirius    Ready    <none>   25s    v1.17.6+k3s1
-$ ssh rancher@192.168.53.7 cat /etc/rancher/k3s/k3s.yaml | sed -e 's#127.0.0.1:6443#control.cygnus.home.ldaws.com:6443#g'
-apiVersion: v1
-<snip>
-# using ^ config, `kubectl get nodes` worked from my client machine
-$ sudo systemctl set-default hypervisor
+## Bootstrap
+
+```shell
+sudo kubeadm init \
+  --control-plane-endpoint="$(hostname -f)" \
+  --pod-network-cidr=10.58.0.0/16
+```
+
+```shell
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
+kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
