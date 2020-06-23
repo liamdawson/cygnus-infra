@@ -42,16 +42,41 @@ Accepted
 ### Command History
 
 ```shell
+### prerequisites etc.
 sudo apt-get update -y && sudo apt-get dist-upgrade -y && sudo apt-get autoremove -y
 sudo apt-get install -y unattended-upgrades apt-listchanges bsd-mailx \
+  ufw \
   vim ssh-import-id \
   git
 ssh-import-id-gh liamdawson
 vim /etc/apt/apt.conf.d/50unattended-upgrades # see below for contents
+
+### install pi-hole
 curl -sSL https://install.pi-hole.net > install.sh
 less install.sh
 bash install.sh
 sudo pihole -a -p # set a new password
+echo 'BLOCKINGMODE=NXDOMAIN' | sudo tee -a /etc/pihole/pihole-FTL.conf >/dev/null
+sudo systemctl restart pihole-FTL.service
+
+### configure firewall
+# ssh!
+sudo ufw allow 22/tcp
+
+# from pi-hole docs
+(
+sudo ufw allow 80/tcp
+sudo ufw allow 53/tcp
+sudo ufw allow 53/udp
+sudo ufw allow 67/tcp
+sudo ufw allow 67/udp
+)
+
+# (else loooooooong https timeouts)
+sudo ufw reject 443/tcp
+sudo ufw enable
+
+### setup DNS over HTTPS
 curl -fSLO https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-arm.tgz
 tar -xvzf cloudflared-stable-linux-arm.tgz
 sudo cp ./cloudflared /usr/local/bin
@@ -68,6 +93,7 @@ EOF
 sudo cloudflared service install
 sudo systemctl enable --now cloudflared
 # test with: dig @127.0.0.1 -p 5053 google.com
+
 # - set custom DNS ipv4 in the pi-hole to 127.0.0.1#5053
 # - remove all other DNS servers
 # - set conditional forwarding for local domain
