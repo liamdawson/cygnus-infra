@@ -5,11 +5,13 @@ set -eux
 echo 'kubeadmin ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/kubeadmin
 sudo -u kubeadmin ssh-import-id gh:liamdawson
 
-cat <<EOF | sudo tee /etc/apt/sources.list
+cat <<EOF | sudo tee /etc/apt/sources.list >/dev/null
 deb http://ftp.au.debian.org/debian buster main contrib
 deb http://security.debian.org/debian-security buster/updates main contrib
 deb http://ftp.au.debian.org/debian buster-updates main contrib
 EOF
+
+echo "deb http://ftp.au.debian.org/debian buster-backports main" > /etc/apt/sources.list.d/buster-backports.list
 
 # docker/kubernetes repositories
 curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
@@ -49,3 +51,8 @@ cat > /etc/docker/daemon.json <<EOF
   "storage-driver": "overlay2"
 }
 EOF
+
+mkdir -p /var/local/lib/kubedata
+cat <<EOEXPORTS >/etc/exports
+/var/local/lib/kubedata 127.0.0.1/255.255.255.0(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure) 10.58.0.0/255.255.0.0(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure)
+EOEXPORTS

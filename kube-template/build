@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -eu
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+cd "$DIR"
+
+if command -v caffeinate >/dev/null 2>&1; then
+  caffeinate -ims packer build -on-error=ask .
+else
+  packer build -on-error=ask .
+fi

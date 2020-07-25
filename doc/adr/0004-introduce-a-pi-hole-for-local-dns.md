@@ -72,7 +72,6 @@ sudo ufw allow 67/tcp
 sudo ufw allow 67/udp
 )
 
-# (else loooooooong https timeouts)
 sudo ufw reject 443/tcp
 sudo ufw enable
 
