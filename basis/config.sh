@@ -42,7 +42,7 @@ iface br0 inet dhcp
 
 # kubernetes node bridge, tagged for VLAN
 auto br1
-iface br1 inet manual
+iface br1 inet dhcp
   bridge_hw ${br1_mac}
   bridge-ports ${primary_device_name}.587
   metric 2000
@@ -69,14 +69,12 @@ get_primary_device_name() {
     echo "eth1"
   else
     # I tried the ip route get 1 approach, but that isn't idempotent
-    basename "$(find /sys/class/net -name 'enp*' | head -n1)"
+    # The VLAN'd version appears if "." isn't excluded
+    basename "$(find /sys/class/net -iregex '/sys/class/net/enp[^.]+' | head -n1)"
   fi
 }
 
-# $ ip route get 1
-# 1.0.0.0 via 192.168.0.1 dev enp34s0 src 192.168.1.1 uid 1000
-#   cache
-primary_device_name="$(ip route get 1 | head -n1 | awk '{print $5;}')"
+primary_device_name="$(get_primary_device_name)"
 is_in_vagrant="false"
 
 if [ -d /vagrant ]; then
