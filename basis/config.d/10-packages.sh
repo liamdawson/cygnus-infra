@@ -8,7 +8,14 @@ apt_packages=(
 
   iwd
 
+  nfs-common
+
   systemd-container
+
+  libosinfo-bin
+  virtinst
+  qemu-kvm
+  libvirt-daemon-system
 )
 
 main() {
