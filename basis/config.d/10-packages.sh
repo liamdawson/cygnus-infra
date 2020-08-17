@@ -9,6 +9,7 @@ apt_packages=(
   iwd
 
   nfs-common
+  nfs-kernel-server
 
   systemd-container
 
